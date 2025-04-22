@@ -1,7 +1,6 @@
 commit notes
 
-project setup //navbar setup:
-start frontend creation //create componenets// setup tailwind //add google font
+
 
 
 
