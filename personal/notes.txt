@@ -1,0 +1,14 @@
+commit notes
+
+project setup //navbar setup:
+start frontend creation //create componenets// setup tailwind //add google font
+
+
+
+
+Learn
+
+cd
+client, npm run dev
+npm install react-router-dom react-hot-toas
+
