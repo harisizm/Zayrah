@@ -20,7 +20,6 @@ export const AppContextProvider = ({ children }) => {
     </AppContext.Provider>
   )
 }
-export const useAPPContext = () => {  
-  
+export const useAppContext = () => {  
   return useContext(AppContext);
 }
