@@ -1,7 +1,8 @@
 commit notes
 
 
- 
+
+
 
 
 
@@ -12,5 +13,9 @@ Learn
 cd
 client, npm run dev
 npm install react-router-dom react-hot-toast
+tailwind css
+pre builtuis
+
+
 
 
