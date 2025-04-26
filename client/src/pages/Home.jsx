@@ -1,9 +1,9 @@
 import React from 'react'
-import MainBanner from '../componenets/MainBanner'
-import Categories from '../componenets/Categories'
-import Bestseller from '../componenets/Bestseller'
-import BottomBanner from '../componenets/BottomBanner'
-import NewsLetter from '../componenets/NewsLetter'
+import MainBanner from '../components/MainBanner'
+import Categories from '../components/Categories'
+import Bestseller from '../components/Bestseller'
+import BottomBanner from '../components/BottomBanner'
+import NewsLetter from '../components/NewsLetter'
 
 
 const Home = () => {
