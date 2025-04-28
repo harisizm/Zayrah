@@ -4,6 +4,8 @@ commit notes
 
 
 
+
+
  
  
 
@@ -19,7 +21,9 @@ npm install react-router-dom react-hot-toast
 tailwind css
 pre builtuis
 
+bcryptjs to encrypt passwords
 
+backened initilize
+  npm install bcryptjs cloudinary cookie-parser cors dotenv express jsonwebtoken mongoose multer stripe
 
-
-
+//middleware configuration
