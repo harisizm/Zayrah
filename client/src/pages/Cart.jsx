@@ -14,7 +14,8 @@ const Cart = () => {
   const getCart = ()=>{
     let tempArray = []
     for(const key in cartItems){
-      const product = products.find((item)=>item._id === key)
+      const product = products.find((item)=>item._id === key);
+      if (!product) continue; // Avoid pushing undefined
       product.quantity = cartItems[key]
       tempArray.push(product)
     }
@@ -28,6 +29,9 @@ const Cart = () => {
       getCart()
     }
   },[products, cartItems])
+
+
+  
 
 
   return products.length > 0 && cartItems ? (

@@ -34,5 +34,6 @@ token coookies genration when user logs in
 
 cloudinary-(a comprehensive cloud-based platform designed to manage, transform, optimize, and deliver images and videos for websites and mobile applications)
 
+npm install axios for 
 
 
