@@ -1,38 +1,9 @@
+bug fixes:
+add address button requires user id error
+
+
 commit notes
 
 
-
- 
-
-
-
-
-
-Learn
-
-cd client,
- npm run dev
-
-npm install react-router-dom react-hot-toast
-tailwind css
-pre builtuis
-
-bcryptjs to encrypt passwords
-
-backened initilize 
-
-cd server
-npm run server
-  npm install bcryptjs cloudinary cookie-parser cors dotenv express jsonwebtoken mongoose multer stripe
-
-middleware(function that get executed before execution of any route) configuration
-
-api end point
-
-token coookies genration when user logs in 
-
-cloudinary-(a comprehensive cloud-based platform designed to manage, transform, optimize, and deliver images and videos for websites and mobile applications)
-
-npm install axios for 
 
 
