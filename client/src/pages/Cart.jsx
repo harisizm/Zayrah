@@ -1,39 +1,113 @@
-import { useEffect, useState } from "react"
-import { useAppContext } from "../context/AppContext"
-import { assets, dummyAddress } from "../assets/assets"
+import { useEffect, useState } from "react";
+import { useAppContext } from "../context/AppContext";
+import { assets } from "../assets/assets";
+import toast from "react-hot-toast"
 
 const Cart = () => {
-  const{products, currency, cartItems, removeFromCart, getCartCount,updateCartItem, navigate , getCartAmount}=useAppContext()
+  const{products, currency, cartItems, removeFromCart, getCartCount,updateCartItem, navigate , getCartAmount, axios, user, setCartItems}= useAppContext()
   
   const [cartArray, setCartArray] = useState([])
-  const [addresses, setAddresses] = useState(dummyAddress)
+  const [addresses, setAddresses] = useState([])
   const [showAddress, setShowAddress] = useState(false)
-  const [selectedAddress, setSelectedAddress] = useState(dummyAddress[0])
+  const [selectedAddress, setSelectedAddress] = useState(null)
   const [paymentOption, setPaymentOption] = useState("COD")
 
-  const getCart = ()=>{
-    let tempArray = []
-    for(const key in cartItems){
-      const product = products.find((item)=>item._id === key);
-      if (!product) continue; // Avoid pushing undefined
-      product.quantity = cartItems[key]
-      tempArray.push(product)
+  const getCart = () => {
+    let tempArray = [];
+    for (const key in cartItems) {
+      const product = products.find((item) => item?._id === key);
+      
+      // ✅ ADDED: NULL CHECK + PRICE VALIDATION
+      if (product && product?.offerPrice) {
+        product.quantity = cartItems[key];
+        tempArray.push(product);
+      } else {
+        console.warn(`⚠️ Removing invalid product ${key} from cart`);
+        // ✅ AUTO-CLEANUP: Remove invalid product
+        const newCartItems = { ...cartItems };
+        delete newCartItems[key];
+        setCartItems(newCartItems);
+      }
     }
-    setCartArray(tempArray)
+    setCartArray(tempArray);
+  };
+
+  const getUserAddress = async()=>{
+    try {
+        const {data} = await axios.get(`/api/address/get?userId=${user._id}`);
+        if(data.success){
+            setAddresses(data.addresses)
+            if(data.addresses.length > 0){
+                setSelectedAddress(data.addresses[0])
+            }
+        }else{
+            toast.error(data.message)
+        }
+    } catch (error) {
+        toast.error(error.message)
+    }
   }
 
-  const placeOrder = async()=>
-   
-  useEffect(()=>{
-    if(products.length > 0 && cartItems){
-      getCart()
+
+  const placeOrder = async()=>{
+        try{
+            if(!selectedAddress){
+                return toast.error("Please select an address")
+            }
+            //place order with cod
+            if(paymentOption === "COD"){
+                const {data} = await axios.post('/api/order/cod', {
+                    userId: user._id,
+                    items: cartArray.map(item=> ({
+                        product: item._id, quantity: item.quantity
+                    })),
+                    address: selectedAddress._id
+                }) 
+                if(data.success){
+                    toast.success(data.message)
+                    setCartItems({})
+                    navigate('/my-orders')
+        }else{
+            toast.error(data.message)
+        }
+    }else{
+        //place order with stripe
+        const {data} = await axios.post('/api/order/stripe', {
+            userId: user._id,
+            items: cartArray.map(item=> ({
+                product: item._id, quantity: item.quantity
+            })),
+            address: selectedAddress._id
+        }) 
+        if(data.success){
+            window.location.replace(data.url)
+        }else{
+            toast.error(data.message)
+        }
     }
-  },[products, cartItems])
+  } catch (error) {
+            toast.error(error.message)
+  }
+  }
+  useEffect(()=>{
+    if (products.length > 0) {
+        getCart();
+      }
+    }, [products]);
 
 
+  useEffect(()=>{
+    if(user){
+      getUserAddress()
+    }
+  },[user])
+
+  useEffect(() => {
+    getCart();
+  }, [cartItems]);
+
+  const [removingId, setRemovingId] = useState(null);
   
-
-
   return products.length > 0 && cartItems ? (
       <div className="flex flex-col md:flex-row mt-16">
           <div className='flex-1 max-w-4xl'>
@@ -47,36 +121,52 @@ const Cart = () => {
                   <p className="text-center">Action</p>
               </div>
 
-             {cartArray.map((product, index) => (
-                  <div key={index} className="grid grid-cols-[2fr_1fr_1fr] text-gray-500 items-center text-sm md:text-base font-medium pt-3">
-                      <div className="flex items-center md:gap-6 gap-3">
-                          <div onClick={()=>{
-                            navigate(`/products/${product.category.toLowerCase()}/${product._id}`); scrollTo(0,0)
-                          }} className="cursor-pointer w-24 h-24 flex items-center justify-center border border-gray-300 rounded">
-                              <img className="max-w-full h-full object-cover" src={product.image[0]} alt={product.name} />
-                          </div>
-                          <div>
-                              <p className="hidden md:block font-semibold">{product.name}</p>
-                              <div className="font-normal text-gray-500/70">
-                                  <p>Weight: <span>{product.weight || "N/A"}</span></p>
-                                  <div className='flex items-center'>
-                                      <p>Qty:</p>
-                                      <select onChange={e => updateCartItem(product._id,Number(e.target.value))}
-                                      value={cartItems[product._id]} className='outline-none'>
-                                          {Array(cartItems[product._id]> 9 ? cartItems[product._id] : 9).fill('').map((_, index) => (
-                                              <option key={index} value={index + 1}>{index + 1}</option>
-                                          ))}
-                                      </select>
-                                  </div>
-                              </div>
-                          </div>
-                      </div>
-                      <p className="text-center">{currency}{product.offerPrice * product.quantity}</p>
-                      <button onClick={()=>removeFromCart(product._id)} className="cursor-pointer mx-auto">
-                          <img src={assets.remove_icon} alt="remove" className="inline-block w-6 h-6" />
-                      </button>
-                  </div>)
-              )}
+              {cartArray.map((product, index) => 
+       product?.offerPrice? (
+    <div key={index} className="grid grid-cols-[2fr_1fr_1fr] text-gray-500 items-center text-sm md:text-base font-medium pt-3">
+      <div className="flex items-center md:gap-6 gap-3">
+        <div onClick={()=>{navigate(`/products/${product.category.toLowerCase()}/${product._id}`); scrollTo(0,0)}} className="cursor-pointer w-24 h-24 flex items-center justify-center border border-gray-300 rounded">
+          <img className="max-w-full h-full object-cover" src={product.image[0]} alt={product.name} />
+        </div>
+        <div>
+          <p className="hidden md:block font-semibold">{product.name}</p>
+          <div className="font-normal text-gray-500/70">
+            <p>Weight: <span>{product.weight || "N/A"}</span></p>
+            <div className='flex items-center'>
+              <p>Qty:</p>
+              <select onChange={e => updateCartItem(product._id, Number(e.target.value))}
+                value={cartItems[product._id]} className='outline-none'>
+                {Array(cartItems[product._id] > 9 ? cartItems[product._id] : 9).fill('').map((_, index) => (
+                  <option key={index} value={index + 1}>{index + 1}</option>
+                ))}
+              </select>
+            </div>
+          </div>
+        </div>
+      </div>
+      <p className="text-center">
+  {currency}
+  {(product.offerPrice || product.price || 0) * product.quantity}
+</p>
+<button 
+  onClick={async () => {
+    setRemovingId(product._id);
+    await removeFromCart(product._id, true);
+    setRemovingId(null);
+  }}
+  disabled={removingId === product._id}
+  className="cursor-pointer mx-auto"
+>
+  {removingId === product._id ? (
+    <span className="loading-spinner" /> // 🚨 Add your spinner component
+  ) : (
+    <img src={assets.remove_icon} alt="remove" className="inline-block w-6 h-6" />
+  )}
+</button>
+    </div>
+  ):null
+)}
+
 
               <button onClick={()=>{navigate("/products"); scrollTo(0,0)}} className="group cursor-pointer flex items-center mt-8 gap-2 text-primary font-medium">
                   <img className="group-hover:-translate-x-1 transition" src={assets.arrow_right_icon_colored} alt="arrow" />
@@ -98,8 +188,11 @@ const Cart = () => {
                       </button>
                       {showAddress && (
                           <div className="absolute top-12 py-1 bg-white border border-gray-300 text-sm w-full">
+
                               {addresses.map((address, index)=>(
-                                <p onClick={() => {setSelectedAddress(address); setShowAddress(false)}} className="text-gray-500 p-2 hover:bg-gray-100">
+                                <p key={index} onClick={() => {setSelectedAddress(address); setShowAddress(false)}} 
+
+                                className="text-gray-500 p-2 hover:bg-gray-100">
                                   {address.street},
                                   {address.city},
                                   {address.state},
@@ -137,7 +230,7 @@ const Cart = () => {
                   </p>
               </div>
 
-              <button onClick={placeOrder()} className="w-full py-3 mt-6 cursor-pointer bg-primary text-white font-medium hover:bg-primary-dull transition">
+              <button onClick={placeOrder} className="w-full py-3 mt-6 cursor-pointer bg-primary text-white font-medium hover:bg-primary-dull transition">
                   {paymentOption === "COD" ? "Place Order" :"Proceed to Checkout"}
               </button>
           </div>
@@ -146,4 +239,4 @@ const Cart = () => {
 }
 
 
-export default Cart
+export default Cart;

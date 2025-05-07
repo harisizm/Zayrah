@@ -89,21 +89,34 @@ const updateCartItem = (itemId, quantity)=>{
 
 }
 //Remove producut from cart
-const removeFromCart=(itemId)=>{
-
-  let cartData = structuredClone(cartItems);
-  if(cartData[itemId]){
-    cartData[itemId] -= 1;
-    if(cartData[itemId]=== 0){
-      delete cartData[itemId];
-
+const removeFromCart = async (itemId, forceRemove = false) => {  // 🚨 Add async
+  try {
+    const newCart = {...cartItems};
+    
+    if (newCart[itemId]) {
+      if (forceRemove || newCart[itemId] <= 1) {
+        delete newCart[itemId];
+      } else {
+        newCart[itemId] -= 1;
+      }
     }
+    
+    // Optimistic update
+    setCartItems(newCart);
+    
+    // 🚨 Add await for backend sync
+    await axios.post('/api/cart/update', { 
+      userId: user._id, 
+      cartItems: newCart 
+    });
+    
+    toast.success(forceRemove ? "Item removed" : "Quantity decreased");
+  } catch (error) {
+    // Revert on error
+    setCartItems(cartItems);
+    toast.error("Failed to update cart");
   }
-
-toast.success("Removed from Cart")
-setCartItems(cartData)
-
-}
+};
 //get cart item count
 
 const getCartCount =()=>{
@@ -149,10 +162,10 @@ const getCartCount =()=>{
     if(user){
       updateCart()
     }
-  },[cartItems,user] )
+  },[cartItems] )
 
  
-  const value = {navigate,user,setUser,isSeller,setIsSeller,showUserLogin,setShowUserLogin,products, currency , addToCart,updateCartItem,removeFromCart,cartItems, searchQuery, setSearchQuery,getCartAmount,getCartCount, axios, fetchProducts
+  const value = {navigate,user,setUser,isSeller,setIsSeller,showUserLogin,setShowUserLogin,products, currency , addToCart,updateCartItem,removeFromCart,cartItems, searchQuery, setSearchQuery,getCartAmount,getCartCount, axios, fetchProducts, setCartItems
 
   }
   return (
